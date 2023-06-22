@@ -1,33 +1,5 @@
-/*
-  DCF77.c - DCF77 library 
-  Copyright (c) Thijs Elenbaas 2012
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-  
-  11 Apr 2012 - initial release 
-  23 Apr 2012 - added UTC support
-  2  Jul 2012 - minor bugfix and additional noise rejection
-*/
-
 #include <DCF77.h>       //https://github.com/thijse/Arduino-Libraries/downloads
 #include <TimeLib.h>        //http://playground.arduino.cc/code/time
-#include <Utils.h>
-
-#define _DCF77_VERSION 1_0_1 // software version of this library
-
-using namespace Utils;
 
 /**
  * Constructor
@@ -99,14 +71,12 @@ ICACHE_RAM_ATTR void DCF77::int0handler() {
 	// If flank is detected quickly after previous flank up
 	// this will be an incorrect pulse that we shall reject
 	if ((flankTime-PreviousLeadingEdge)<DCFRejectionTime) {
-		LogLn("rCT");
 		return;
 	}
 	
 	// If the detected pulse is too short it will be an
 	// incorrect pulse that we shall reject as well
 	if ((flankTime-leadingEdge)<DCFRejectPulseWidth) {
-	    LogLn("rPW");
 		return;
 	}
 	
@@ -137,13 +107,11 @@ ICACHE_RAM_ATTR void DCF77::int0handler() {
  * Add new bit to buffer
  */
 inline void DCF77::appendSignal(unsigned char signal) {
-	Log(signal, DEC);
 	runningBuffer = runningBuffer | ((unsigned long long) signal << bufferPosition);  
 	bufferPosition++;
 	if (bufferPosition > 59) {
 		// Buffer is full before at end of time-sequence 
 		// this may be due to noise giving additional peaks
-		LogLn("EoB");
 		finalizeBuffer();
 	}
 }
@@ -154,7 +122,6 @@ inline void DCF77::appendSignal(unsigned char signal) {
 inline void DCF77::finalizeBuffer(void) {
   if (bufferPosition == 59) {
 		// Buffer is full
-		LogLn("BF");
 		// Prepare filled buffer and time stamp for main loop
 		filledBuffer = runningBuffer;
 		filledTimestamp = now();
@@ -163,7 +130,6 @@ inline void DCF77::finalizeBuffer(void) {
 		FilledBufferAvailable = true;    
     } else {
 		// Buffer is not yet full at end of time-sequence
-		LogLn("EoM");
 		// Reset running buffer
 		bufferinit();      
     }
@@ -180,7 +146,6 @@ bool DCF77::receivedTimeUpdate(void) {
 	}
 	// if buffer is filled, we will process it and see if this results in valid parity
 	if (!processBuffer()) {
-		LogLn("Invalid parity");
 		return false;
 	}
 	
@@ -188,14 +153,12 @@ bool DCF77::receivedTimeUpdate(void) {
 	// we will do some sanity checks on the time
 	time_t processedTime = latestupdatedTime + (now() - processingTimestamp);
 	if (processedTime<MIN_TIME || processedTime>MAX_TIME) {
-		LogLn("Time outside of bounds");
 		return false;
 	}
 
 	// If received time is close to internal clock (2 min) we are satisfied
 	time_t difference = abs(processedTime - now());
 	if(difference < 2*SECS_PER_MIN) {
-		LogLn("close to internal clock");
 		storePreviousTime();
 		return true;
 	}
@@ -206,11 +169,9 @@ bool DCF77::receivedTimeUpdate(void) {
 	time_t shiftCurrent = (latestupdatedTime - processingTimestamp);	
 	time_t shiftDifference = abs(shiftCurrent-shiftPrevious);
 	storePreviousTime();
-	if(shiftDifference < 2*SECS_PER_MIN) {
-		LogLn("time lag consistent");		
+	if(shiftDifference < 2*SECS_PER_MIN) {	
 		return true;
 	} else {
-		LogLn("time lag inconsistent");
 	}
 	
 	// If lag is inconsistent, this may be because of no previous stored date 
