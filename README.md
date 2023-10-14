@@ -79,6 +79,12 @@ The DCF77 directory contains some examples:
   the UTC time to ensure that no ambiguities can exist. For timezone conversion it 
   employs the TimeZone library.
 
+### Signal visualisation
+ 
+  The getSignal() functions allow to analyze the DCF77 signal. This helps to get the 
+  antenna in right direction e.g. Frankfurt. 
+
+  
 
 *** Using the Library ***
 
@@ -132,6 +138,7 @@ The DCFF77 directory contains the DCFF77 library and some example sketches
   This example shows how to convert the DCF77 time to a different timezone. It uses 
   the UTC time to ensure that no ambiguities can exist. For timezone conversion it 
   employs the TimeZone library.
+
 
 ### Example sketch 
 The sketch below implements the most DCF77 basic functionality. It reads the signal from 
