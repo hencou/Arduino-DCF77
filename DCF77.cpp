@@ -282,7 +282,9 @@ bool DCF77::getSignal(void)
 {
 	if (Up) {
 		return(true);
-	} 
+	} else {
+		return(false);
+	}
 }
 
 /**
