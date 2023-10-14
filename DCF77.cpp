@@ -278,7 +278,7 @@ time_t DCF77::getTime(void)
 /**
  * Get DCF signal from receiver
  */
-time_t DCF77::getSignal(void)
+bool DCF77::getSignal(void)
 {
 	if (Up) {
 		return(1);
