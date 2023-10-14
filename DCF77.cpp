@@ -281,7 +281,7 @@ time_t DCF77::getTime(void)
 bool DCF77::getSignal(void)
 {
 	if (Up) {
-		return(1);
+		return(true);
 	} 
 }
 
