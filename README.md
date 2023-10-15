@@ -82,9 +82,10 @@ The DCF77 directory contains some examples:
 ### Signal visualisation
  
   The getSignal() functions allow to analyze the DCF77 signal. This helps to get the 
-  antenna in right direction e.g. Frankfurt. 
-
-  
+  antenna in right direction e.g. Frankfurt.
+  Example: 
+  bool signal = DCF.getSignal(); // Get DCF77 signal for LED     
+  if (signal) { digitalWrite(BUILTIN_LED,LOW); } else { digitalWrite(BUILTIN_LED,HIGH); } 
 
 *** Using the Library ***
 
