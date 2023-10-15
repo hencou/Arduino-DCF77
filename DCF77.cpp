@@ -276,6 +276,18 @@ time_t DCF77::getTime(void)
 }
 
 /**
+ * Get DCF signal from receiver
+ */
+bool DCF77::getSignal(void)
+{
+	if (Up) {
+		return(true);
+	} else {
+		return(false);
+	}
+}
+
+/**
  * Get most recently received time in UTC 
  * Note, this only returns an time once, until the next update
  */
