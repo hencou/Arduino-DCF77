@@ -6,8 +6,8 @@
  */
 DCF77::DCF77(int DCF77Pin, int DCFinterrupt, bool OnRisingFlank) 
 {
-	dCF77Pin     = DCF77Pin;
-	dCFinterrupt = DCFinterrupt;	
+	dCF77Pin     = (uint8_t)DCF77Pin;
+	dCFinterrupt = (uint8_t)DCFinterrupt;	
 	pulseStart   = OnRisingFlank ? HIGH : LOW;
 	
 	if (!initialized) {  
@@ -65,7 +65,7 @@ inline void DCF77::bufferinit(void)
  * Interrupt handler that processes up-down flanks into pulses and stores these in the buffer
  */
 ICACHE_RAM_ATTR void DCF77::int0handler() {
-	int flankTime = millis();
+	unsigned long flankTime = millis();
 	byte sensorValue = digitalRead(dCF77Pin);
 
 	// If flank is detected quickly after previous flank up
@@ -90,7 +90,7 @@ ICACHE_RAM_ATTR void DCF77::int0handler() {
 		if (Up) {
 			// Flank down
 			trailingEdge=flankTime;
-			int difference=trailingEdge - leadingEdge;            
+			unsigned long difference=trailingEdge - leadingEdge;
           		
 			if ((leadingEdge-PreviousLeadingEdge) > DCFSyncTime) {
 				finalizeBuffer();
@@ -171,7 +171,6 @@ bool DCF77::receivedTimeUpdate(void) {
 	storePreviousTime();
 	if(shiftDifference < 2*SECS_PER_MIN) {	
 		return true;
-	} else {
 	}
 	
 	// If lag is inconsistent, this may be because of no previous stored date 
@@ -201,9 +200,9 @@ void DCF77::calculateBufferParities(void) {
 			flags.parityFlag = 0;
 		}
 		// save the parity when the corresponding segment ends
-		if (pos ==  28) {flags.parityMin = flags.parityFlag;};
-		if (pos ==  35) {flags.parityHour = flags.parityFlag;};
-		if (pos ==  58) {flags.parityDate = flags.parityFlag;};
+		if (pos ==  28) {flags.parityMin = flags.parityFlag;}
+		if (pos ==  35) {flags.parityHour = flags.parityFlag;}
+		if (pos ==  58) {flags.parityDate = flags.parityFlag;}
 		// When we received a 1, toggle the parity flag
 		if (s == 1) {
 			flags.parityFlag = flags.parityFlag ^ 1;
@@ -231,10 +230,9 @@ bool DCF77::processBuffer(void) {
 	//  Calculate parities for checking buffer
 	calculateBufferParities();
 	tmElements_t time;
-	bool proccessedSucces;
 
 	struct DCF77Buffer *rx_buffer;
-	rx_buffer = (struct DCF77Buffer *)(unsigned long long)&processingBuffer;
+	rx_buffer = (struct DCF77Buffer *)&processingBuffer;
 
 	
 	// Check parities
@@ -245,11 +243,11 @@ bool DCF77::processBuffer(void) {
     { 
       //convert the received buffer into time	  	  	 
       time.Second = 0;
-	  time.Minute = rx_buffer->Min-((rx_buffer->Min/16)*6);
-      time.Hour   = rx_buffer->Hour-((rx_buffer->Hour/16)*6);
-      time.Day    = rx_buffer->Day-((rx_buffer->Day/16)*6); 
-      time.Month  = rx_buffer->Month-((rx_buffer->Month/16)*6);
-      time.Year   = 2000 + rx_buffer->Year-((rx_buffer->Year/16)*6) -1970;
+	  time.Minute = (rx_buffer->Min/16)*10 + (rx_buffer->Min%16);
+      time.Hour   = (rx_buffer->Hour/16)*10 + (rx_buffer->Hour%16);
+      time.Day    = (rx_buffer->Day/16)*10 + (rx_buffer->Day%16); 
+      time.Month  = (rx_buffer->Month/16)*10 + (rx_buffer->Month%16);
+      time.Year   = 2000 + (rx_buffer->Year/16)*10 + (rx_buffer->Year%16) -1970;
 	  latestupdatedTime = makeTime(time);	 
 	  CEST = rx_buffer->CEST;
 	  //Parity correct
@@ -267,12 +265,10 @@ bool DCF77::processBuffer(void) {
 time_t DCF77::getTime(void)
 {
 	if (!receivedTimeUpdate()) {
-		return(0);
-	} else {
-		// Send out time, taking into account the difference between when the DCF time was received and the current time
-		time_t currentTime =latestupdatedTime + (now() - processingTimestamp);
-		return(currentTime);
+		return 0;
 	}
+	// Send out time, taking into account the difference between when the DCF time was received and the current time
+	return latestupdatedTime + (now() - processingTimestamp);
 }
 
 /**
@@ -280,11 +276,7 @@ time_t DCF77::getTime(void)
  */
 bool DCF77::getSignal(void)
 {
-	if (Up) {
-		return(true);
-	} else {
-		return(false);
-	}
+	return Up;
 }
 
 /**
@@ -294,13 +286,11 @@ bool DCF77::getSignal(void)
 time_t DCF77::getUTCTime(void)
 {
 	if (!receivedTimeUpdate()) {
-		return(0);
-	} else {
-		// Send out time UTC time
-		int UTCTimeDifference = (CEST ? 2 : 1)*SECS_PER_HOUR;
-		time_t currentTime =latestupdatedTime - UTCTimeDifference + (now() - processingTimestamp);
-		return(currentTime);
+		return 0;
 	}
+	// Send out time UTC time
+	int UTCTimeDifference = (CEST ? 2 : 1)*SECS_PER_HOUR;
+	return latestupdatedTime - UTCTimeDifference + (now() - processingTimestamp);
 }
 
 int DCF77::getSummerTime(void) 
@@ -311,8 +301,8 @@ int DCF77::getSummerTime(void)
 /**
  * Initialize parameters
  */
-int DCF77::dCF77Pin=0;
-int DCF77::dCFinterrupt=0;
+uint8_t DCF77::dCF77Pin=0;
+uint8_t DCF77::dCFinterrupt=0;
 byte DCF77::pulseStart=HIGH;
 
 // Parameters shared between interupt loop and main loop
@@ -327,9 +317,9 @@ unsigned long long DCF77::runningBuffer = 0;
 unsigned long long DCF77::processingBuffer = 0;
 
 // Pulse flanks
-int DCF77::leadingEdge=0;
-int DCF77::trailingEdge=0;
-int DCF77::PreviousLeadingEdge=0;
+unsigned long DCF77::leadingEdge=0;
+unsigned long DCF77::trailingEdge=0;
+unsigned long DCF77::PreviousLeadingEdge=0;
 bool DCF77::Up= false;
 
 // DCF77 and internal timestamps

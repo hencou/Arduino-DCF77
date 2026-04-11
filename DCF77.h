@@ -21,8 +21,8 @@ private:
 
     //Private variables
     bool initialized;   
-    static int dCF77Pin;
-    static int dCFinterrupt;
+    static uint8_t dCF77Pin;
+    static uint8_t dCFinterrupt;
     static byte pulseStart;
 
     // DCF77 and internal timestamps
@@ -69,10 +69,10 @@ private:
     static unsigned long long processingBuffer;
 
     // Pulse flanks
-    static   int  leadingEdge;
-    static   int  trailingEdge;
-    static   int  PreviousLeadingEdge;
-    static   bool Up;
+    static unsigned long leadingEdge;
+    static unsigned long trailingEdge;
+    static unsigned long PreviousLeadingEdge;
+    static bool Up;
     
     //Private functions
     void static initialize(void);
